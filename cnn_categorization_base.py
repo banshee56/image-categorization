@@ -19,5 +19,7 @@ def cnn_categorization_base(netspec_opts):
     net = nn.Sequential()
 
     # add layers as specified in netspec_opts to the network
+    kernel_size, num_filters, stride, layer_type = netspec_opts['kernel_size'], netspec_opts['num_filters'], netspec_opts['stride'], netspec_opts['layer_type']
+    
 
     return net

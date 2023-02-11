@@ -19,12 +19,16 @@ def create_dataset(data_path, output_path=None, contrast_normalization=False, wh
     val_ds: (TensorDataset), the examples (inputs and labels) in the validation set
     """
     # read the data and extract the various sets
-
+    data = torch.load(data_path)
+    data_tr, data_te, sets_tr, label_tr, class_names = data['data_tr'], data['data_te'], data['sets_tr'], data['label_tr'], data['class_names']
 
     # apply the necessary preprocessing as described in the assignment handout.
     # You must zero-center both the training and test data
     if data_path == "image_categorization_dataset.pt":
         # do mean centering here
+        img_mean = data_tr.mean(axis=0)
+        data_tr = data_tr - img_mean
+        data_te = data_te - img_mean
 
 
         # %%% DO NOT EDIT BELOW %%%% #
@@ -37,9 +41,12 @@ def create_dataset(data_path, output_path=None, contrast_normalization=False, wh
             examples, rows, cols, channels = data_tr.size()
             data_tr = data_tr.reshape(examples, -1)
             W = torch.matmul(data_tr[sets_tr == 1].T, data_tr[sets_tr == 1]) / examples
-            E, V = torch.eig(W, eigenvectors=True)
-            en = torch.sqrt(torch.mean(E[:, 0]).squeeze())
-            M = torch.diag(en / torch.max(torch.sqrt(E[:, 0].squeeze()), torch.tensor([10.0])))
+            E, V = torch.linalg.eigh(W)
+            E = E.real
+            V = V.real
+
+            en = torch.sqrt(torch.mean(E).squeeze())
+            M = torch.diag(en / torch.max(torch.sqrt(E.squeeze()), torch.tensor([10.0])))
 
             data_tr = torch.matmul(data_tr.mm(V.T), M.mm(V))
             data_tr = data_tr.reshape(examples, rows, cols, channels)
@@ -56,4 +63,3 @@ def create_dataset(data_path, output_path=None, contrast_normalization=False, wh
     val_ds = TensorDataset(data_tr[sets_tr == 2], label_tr[sets_tr == 2])
 
     return train_ds, val_ds
-
