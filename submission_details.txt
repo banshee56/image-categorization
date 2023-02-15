@@ -1,8 +1,10 @@
 Changes in netspec
 I added conv_4, bn_4, and relu_4 to the base model’s netspec. It has the most number of filters (128) as it is the deepest layer to capture more sophisticated features.
 
+
+
 Data Augmentation
-Random crop and mirroring 
+I implemented the following data augmentations in cnn_categorization.py for improved model:
 
 Randomized Crop
 I cropped each of the 32,000 original images in the training set using transforms.RandomResizedCrop().
@@ -10,8 +12,12 @@ I cropped each of the 32,000 original images in the training set using transform
 Mirroring
 I flipped each of the 32,000 original images (not the cropped images) using transforms.RandomHorizontalFlip().
 
+
+
 Training Policy
 I only changed the step_size of the training policy. I noticed the validation accuracy was getting higher (~62%) around epoch 10 in all of my tests, so I set step size to that epoch to better capture the validation accuracy there.
+
+
 
 Results
 This model resulted in ~62% validation accuracy in epochs 11-25. Here is the final epoch result:

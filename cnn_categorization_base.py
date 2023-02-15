@@ -67,6 +67,4 @@ def cnn_categorization_base(netspec_opts):
             net.add_module('pool_'+str(pl), nn.AvgPool2d(kernel_size[l], stride[l], 0))
             pl +=1
 
-    # pred layer
-    print(net)
     return net

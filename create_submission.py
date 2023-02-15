@@ -49,7 +49,7 @@ def create_submission(model_type):
     prob_val = soft_max(model(data_val).squeeze())
     assert prob_val.size() == (6400, 16), f"Expected the output of the validation set to be of size (6400, 16) " \
                                           f"but was {prob_val.size()} instead"
-    
+
     output_name_zip = "./{}_categorization.zip".format(model_type)
     output_name_test = "./{}_testing.pt".format(model_type)
     output_name_val = "./{}_validation.pt".format(model_type)
