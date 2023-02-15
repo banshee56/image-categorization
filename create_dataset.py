@@ -27,8 +27,8 @@ def create_dataset(data_path, output_path=None, contrast_normalization=False, wh
     if data_path == "image_categorization_dataset.pt":
         # do mean centering here
         img_mean = data_tr.mean(axis=0)
-        data_tr = data_tr - img_mean
-        data_te = data_te - img_mean
+        data_tr = torch.subtract(data_tr, img_mean)
+        data_te = torch.subtract(data_te, img_mean)
 
 
         # %%% DO NOT EDIT BELOW %%%% #

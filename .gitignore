@@ -127,4 +127,5 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-image_categorization_dataset.pt
+*pt
+*.zip

@@ -6,6 +6,11 @@ from torch import random, save
 from argparse import ArgumentParser
 import matplotlib.pyplot as plt
 
+
+from time import time
+import torch
+from torchvision import transforms
+
 # seed the random number generator. Remove the line below if you want to try different initializations
 random.manual_seed(0)
 
@@ -35,8 +40,24 @@ def cnn_categorization(model_type="base",
     # the respective blocks
     if model_type == "base":
         # create netspec_opts
+        layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu', 'pool', 'conv']
+        kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      8,      1]
+        stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      1]
+        num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      0,      16]
+
+        netspec_opts = {'kernel_size': kernel_size,
+                        'num_filters': num_filers, 
+                        'stride': stride, 
+                        'layer_type': layer_type}
 
         # create train_opts
+        train_opts = {'lr': 0.1, 
+                    'weight_decay': 0.0001, 
+                    'batch_size': 128, 
+                    'momentum': 0.9, 
+                    'num_epochs': 25, 
+                    'step_size': 20, 
+                    'gamma': 0.1}
 
         # create model base on tetspect_opts
         model = cnn_categorization_base(netspec_opts)
@@ -44,10 +65,108 @@ def cnn_categorization(model_type="base",
     elif model_type == "improved":
         # create netspec_opts
 
+        # # base
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu', 'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      0,      16]
+
+        # # test 1: varying filter size + increasing depth by 1 additional layer
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu',   'conv',  'bn', 'relu', 'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,      4,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      2,      0,      0,      1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      128,    128,    0,      0,      16]
+
+        # # test 2: 3 additional layers
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu',  'conv',  'bn', 'relu', 'conv',   'bn', 'relu', 'conv',  'bn',  'relu', 'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,     3,       0,      0,     3,     0,        0,      2,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      2,      0,      0,     2,       0,      0,     1,     0,        0,      1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      128,    128,    0,     256,     256,    0,     512,   512,      0,      0,      16]
+
+        # test 3: varying # of filters, starting with higher number of filters
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu', 'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      1]
+        # num_filers =    [32,    32,     0,      64,     64,     0,      128,    128,    0,      0,      16]
+
+        # test 4: 1x1 filters, bottleneck sandwiching
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv', 'bn',  'relu',   'conv',  'bn', 'relu',  'conv', 'bn', 'relu',  'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,     1,       0,      0,      3,      0,      0,      1,      0,      0,      8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,     2,       0,      0,      1,      0,      0,      1,      0,      0,      1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,     32,      32,     0,      32,     32,     0,      64,     64,     0,      0,      16]
+
+        # # test 5: changing stride for test 1 and adding another layer so size doesn't change before pooling
+        layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu',   'conv',  'bn', 'relu', 'pool', 'conv']
+        kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,      8,      1]
+        stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      0,      0,      1,      1]
+        num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      128,    128,    0,      0,      16]
+
+        # # test 6: add more layers using bottleneck
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu',  'conv', 'bn', 'relu', 'conv',    'bn',  'relu', 'conv',  'bn', 'relu',  'conv',  'bn', 'relu',  'conv',  'bn', 'relu',  'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      1,      0,      0,       3,     0,      0,      1,      0,      0,     1,       0,      0,      3,      0,      0,      1,      0,      0,      8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,       1,     0,      0,      1,      0,      0,     2,       0,      0,      1,      0,      0,      1,      0,      0,      1,      1]
+        # num_filers =    [16,    16,     0,      16,     16,     0,       16,    16,     0,      32,     32,     0,     32,      32,     0,      32,     32,     0,      64,     64,     0,      0,      16]
+
+        # test 7: based on test 5, just more layers
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu',   'conv',  'bn', 'relu', 'conv',  'bn', 'relu',   'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,        8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      0,      0,      1,      0,      0,        1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      128,    128,    0,      256,    256,    0,        0,      16]
+
+        # test 8: test 5 + test 3
+        # layer_type =    ['conv', 'bn', 'relu', 'conv', 'bn', 'relu', 'conv',  'bn', 'relu',   'conv',  'bn', 'relu', 'conv',  'bn', 'relu',   'pool', 'conv']
+        # kernel_size =   [3,     0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,      3,      0,      0,        8,      1]
+        # stride =        [1,     0,      0,      2,      0,      0,      2,      0,      0,      1,      0,      0,      1,      0,      0,        1,      1]
+        # num_filers =    [16,    16,     0,      32,     32,     0,      64,     64,     0,      128,    128,    0,      128,    128,    0,        0,      16]
+
+        netspec_opts = {'kernel_size': kernel_size,
+                        'num_filters': num_filers, 
+                        'stride': stride, 
+                        'layer_type': layer_type}
+
         # create train_opts
+        train_opts = {'lr': 0.1, 
+                    'weight_decay': 0.0001, 
+                    'batch_size': 128, 
+                    'momentum': 0.9, 
+                    'num_epochs': 25, 
+                    'step_size': 10, 
+                    'gamma': 0.1}
 
         # create improved model
         model = cnn_categorization_improved(netspec_opts)
+
+        # data augmentation
+        original_tr = train_ds.tensors[0].clone()
+        new_training = original_tr.clone()
+        new_labels = train_ds.tensors[1]
+
+        # randomized crop
+        crops = transforms.RandomResizedCrop(32)(original_tr)               # crop the images in sequence
+        new_training = torch.cat((new_training, crops))                     # add to training set
+        new_labels = torch.cat((new_labels, train_ds.tensors[1]))           # add corresponding labels
+
+        # horizontal mirroring
+        flips = transforms.RandomHorizontalFlip(1)(original_tr)
+        new_training = torch.cat((new_training, flips))                     
+        new_labels = torch.cat((new_labels, train_ds.tensors[1]))           
+
+        # # illumination changes
+        # darken = transforms.ColorJitter(brightness=(0.3, 0.9))              # the transformations
+        # brighten = transforms.ColorJitter(brightness=(1.1, 1.8))
+
+        # darker_img = darken(original_tr)                                    # the transformed images
+        # brighter_img = brighten(original_tr)
+
+        # new_training = torch.cat((new_training, darker_img))              
+        # new_labels = torch.cat((new_labels, train_ds.tensors[1]))           
+        # new_training = torch.cat((new_training, brighter_img))                   
+        # new_labels = torch.cat((new_labels, train_ds.tensors[1]))   
+        # print(new_training.shape)       
+
+
+        # add new data to training set
+        train_ds.tensors = tuple((new_training, new_labels))        # change back to tuple
     else:
         raise ValueError(f"Error: unknown model type {model_type}")
 
@@ -73,7 +192,7 @@ if __name__ == '__main__':
     # For example, to change model type from base to improved
     # type <cnn_categorization.py --model_type improved> at a command line and press enter
     args = ArgumentParser()
-    args.add_argument("--model_type", type=str, default="base", required=False,
+    args.add_argument("--model_type", type=str, default="improved", required=False,
                       help="The model type must be either base or improved")
     args.add_argument("--data_path", type=str, default="image_categorization_dataset.pt",
                       required=False, help="Specify the path to the dataset")
